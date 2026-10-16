@@ -34,7 +34,7 @@ function probabilities(d){let suitability={deer:{over:.72,under:.47,canopy:.02},
 function current(){return JSON.parse(JSON.stringify(data))}function changed(){result=null;$('widthVal').textContent=data.width+' m';$('slopeVal').textContent=data.slope+'%';$('budgetVal').textContent=data.budget+'억 원';$('sceneTag').textContent=names[data.animal]+' · '+types[data.type];$('cost').textContent=estimate(data).toFixed(1)+'억';$('cost').classList.toggle('warn',estimate(data)>data.budget);$('success').textContent='– /100';$('risk').textContent='– /100';$('bar').style.width='0%';$('summary').textContent='조건을 변경했습니다. 새롭게 실험하여 결과를 확인하세요.';let c=estimate(data),warn=c>data.budget;let suggestions=[];if(data.animal==='frog'&&!data.drain)suggestions.push('양서류를 위해 습도·배수 관리를 고려해 보세요.');if(data.animal==='squirrel'&&data.type!=='canopy')suggestions.push('수목 생활 동물에 적합한 공중 연결 구조를 검토해 보세요.');if(data.slope>20)suggestions.push('진입 경사가 가파르면 이동이 어려울 수 있습니다.');$('feedback').textContent=(warn?'⚠️ 현재 가상 비용이 예산을 초과했습니다. ':'예산 이내의 설계입니다. ')+(suggestions[0]||'환경 조건을 바꿔 가설을 검증해 보세요.');$('question').textContent=data.animal==='frog'?'습도 관리 시설을 추가하면 개구리 이동 결과는 어떻게 달라질까요?':data.animal==='squirrel'?'청설모에게 높은 곳의 연결로가 유리할 것이라는 가정을 검증해 보세요.':'통로 너비와 유도울타리는 각각 어떤 역할을 할까요?';draw()}
 function rand(){return Math.random()}function simulate(){const d=current(),p=probabilities(d),cost=estimate(d);let good=0,risk=0,other=0,outs=[];for(let i=0;i<100;i++){let r=rand(),status=r<p.success?'good':r<p.success+p.risk?'risk':'other';if(status==='good')good++;else if(status==='risk')risk++;else other++;outs.push(status)}return{d,good,risk,other,cost,outs,num:++experiment}}
 function begin(){if(running)return;running=true;$('run').disabled=true;result=simulate();const r=result;$('summary').textContent='가상 동물 100마리의 이동을 계산하고 있습니다…';particles=r.outs.map((status,i)=>({status,x:80-(i%10)*4,y:112+(i%13)*24,delay:i*31,offset:rand()*18}));const start=performance.now(),duration=3100;function frame(t){let progress=Math.min(1,(t-start)/duration);draw(progress);if(progress<1){raf=requestAnimationFrame(frame)}else{running=false;$('run').disabled=false;$('success').textContent=r.good+' /100';$('risk').textContent=r.risk+' /100';$('cost').textContent=r.cost.toFixed(1)+'억';$('bar').style.width=r.good+'%';$('summary').innerHTML=`100마리 중 <strong>${r.good}마리 안전 통과</strong>, <strong>${r.risk}마리 도로 진입 위험</strong>, ${r.other}마리 우회·이동 포기. ${r.cost>r.d.budget?'⚠️ 예산 초과입니다.':'✅ 예산 안에서 실험했습니다.'}`;particles=[];draw()}}raf=requestAnimationFrame(frame)}
-function roundRect(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}function tree(x,y,r){ctx.fillStyle='#557347';ctx.fillRect(x-3,y,6,19);ctx.fillStyle='#3d7550';ctx.beginPath();ctx.arc(x,y-5,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#619662';ctx.beginPath();ctx.arc(x-7,y-7,r*.55,0,Math.PI*2);ctx.fill()}
+function roundRect(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}function tree(x,y,r){ctx.fillStyle='#557347';ctx.fillRect(x-3,y,6,19);ctx.fillStyle='#3d7550';ctx.beginPath();ctx.arc(x,y-5,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#619662';ctx.beginPath();ctx.arc(x-7,y-7,r*.55,0,Math.PI*2);ctx.fill()}function animalEmoji(kind){return{deer:'🦌',raccoon:'🦝',frog:'🐸',squirrel:'🐿️'}[kind]||'🐾'}function drawAnimal(x,y,status){const halo={good:'rgba(43,116,75,.24)',risk:'rgba(190,56,51,.22)',other:'rgba(222,144,73,.24)'}[status]||'rgba(43,116,75,.2)';ctx.beginPath();ctx.fillStyle=halo;ctx.arc(x,y-2,11,0,Math.PI*2);ctx.fill();ctx.font='18px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(animalEmoji(data.animal),x,y);ctx.textAlign='left';ctx.textBaseline='alphabetic'}
 function draw(progress){
 const w=960,h=540;
 ctx.clearRect(0,0,w,h);ctx.fillStyle='#bcd4ad';ctx.fillRect(0,0,w,h);
@@ -59,6 +59,10 @@ if(data.fence){ctx.strokeStyle='#eae5cc';ctx.lineWidth=4;ctx.setLineDash([12,9])
 if(data.noise){ctx.fillStyle='#6a7775';ctx.fillRect(410,185,7,170);ctx.fillRect(544,185,7,170)}
 ctx.font='bold 20px system-ui';ctx.fillStyle='#f6fff4';ctx.fillText('서쪽 서식지',25,34);ctx.fillText('동쪽 서식지',784,34);
 ctx.font='14px system-ui';ctx.fillStyle='#f5f0df';ctx.fillText('북 ↑',466,26);ctx.fillText('↓ 남',465,517);
+if(typeof progress!=='number'){
+for(let i=0;i<4;i++) drawAnimal(85+i*28,235+i*8,'good');
+ctx.fillStyle='rgba(20,48,38,.78)';ctx.font='bold 15px system-ui';ctx.fillText('선택한 동물 미리보기',28,218)
+}
 if(typeof progress==='number'){
 const shown=Math.floor(progress*100);
 for(let i=0;i<shown;i++){
@@ -67,7 +71,7 @@ let x,y;
 if(s.status==='good'){x=100+tt*765;y=263+Math.sin(tt*Math.PI)*(-14)+(i%5)*4}
 else if(s.status==='risk'){x=100+tt*405;y=295+(i%11)*5}
 else{x=100+tt*250;y=110+(i%9)*33}
-ctx.fillStyle=s.status==='good'?'#2b744b':s.status==='risk'?'#be3833':'#de9049';ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill()
+drawAnimal(x,y,s.status)
 }
 roundRect(20,464,217,48,9,'#153d31dd');ctx.fillStyle='white';ctx.font='bold 20px system-ui';ctx.fillText('이동 관찰 '+shown+'/100',32,494)
 }
